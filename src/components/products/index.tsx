@@ -2,9 +2,9 @@ import "react-hot-loader";
 import * as React from "react";
 import { Product as Prod } from "../../entites";
 import styled from "styled-components";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import * as selectors from "../../selectors";
-import { RootState } from "../../state";
+import actions from "../../actions";
 
 const ProductList = styled.ul``;
 
@@ -12,27 +12,39 @@ const ProductWrapper = styled.li``;
 const ProductName = styled.label``;
 const ProductDescription = styled.p``;
 const ProductPrice = styled.span``;
+const AddToCart = styled.a``;
 
-const Product: React.FunctionComponent<Prod> = ({
+type ProductProps = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  onAddToCart: () => void;
+}
+
+const Product: React.FunctionComponent<ProductProps> = ({
   id,
   name,
   description,
   price,
+  onAddToCart
 }) => (
-  <ProductWrapper key={id}>
+  <ProductWrapper>
     <ProductName>{name}</ProductName>
     <ProductDescription>{description}</ProductDescription>
     <ProductPrice>{price}</ProductPrice>
+    <AddToCart onClick={onAddToCart}>Add to Cart</AddToCart>
   </ProductWrapper>
 );
 
-const Products: React.FunctionComponent<{ products: Prod[] }> = ({
+const Products: React.FunctionComponent<{ products: Prod[], onAddToCart: (id: number) => () => void }> = ({
   products,
+  onAddToCart
 }) =>
   products.length > 0 ? (
     <ProductList>
       {products.map((p) => (
-        <Product {...p} />
+        <Product key={p.id} {...p} onAddToCart={onAddToCart(p.id)} />
       ))}
     </ProductList>
   ) : (
@@ -40,7 +52,9 @@ const Products: React.FunctionComponent<{ products: Prod[] }> = ({
   );
 
 export const ProductsContainer = () => {
-  const products = useSelector((s: RootState) => selectors.getAllProducts(s));
+  const dispatch = useDispatch();
+  const products = useSelector(selectors.getAllProducts);
+  const onAddToCart = (id: number) => () => pipe(id, actions.addToCart, dispatch); 
 
-  return <Products products={products} />;
+  return <Products products={products} onAddToCart={onAddToCart} />;
 };

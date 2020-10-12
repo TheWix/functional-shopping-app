@@ -1,16 +1,16 @@
 import { Lens } from "monocle-ts";
 import { getType } from "typesafe-actions";
-import { Action } from "../../actions";
+import type { ProductAction } from "./actions";
 import { Product } from "../types";
-import actions from "./actions";
+import * as actions from "./actions";
 
 export type ProductState = {
-  products: { [index: number]: Product };
+  byId: { [index: number]: Product };
   allIds: number[];
 };
 
 const initialState: ProductState = {
-  products: {},
+  byId: {},
   allIds: [],
 };
 
@@ -21,31 +21,32 @@ const toObject = <T, ST extends Extract<T, string>, K extends keyof ST>(
 
 export default (
   state: ProductState = initialState,
-  action: Action
+  action: ProductAction
 ): ProductState => {
   switch (action.type) {
     case getType(actions.productsReceivedSuccessfully):
-      pipe(
-        state,
-        R.evolve({
-          products: flow(R.mergeRight(toObject("id")(action.payload))),
-        })
-      );
+      // pipe(
+      //   state,
+      //   R.evolve({
+      //     byId: flow(R.mergeRight(toObject("id")(action.payload))),
+      //   })
+      // );
 
       return {
         ...state,
-        products: pipe(
+        byId: pipe(
           action.payload,
           toObject("id"),
-          R.mergeRight(state.products)
+          R.mergeRight(state.byId)
         ),
-        allIds: pipe(action.payload, R.pluck("id"), R.difference(state.allIds)),
+        allIds: pipe(action.payload, R.pluck("id"), R.concat(state.allIds)),
       };
+    default:
+      return state;
   }
-  return state;
 };
 
-export const _products = Lens.fromProp<ProductState>()("products");
+export const _byId = Lens.fromProp<ProductState>()("byId");
 export const _allIds = Lens.fromProp<ProductState>()("allIds");
 
 export const selectors = {
@@ -53,8 +54,8 @@ export const selectors = {
     pipe(
       state,
       _allIds.get,
-      A.map((id) => _products.get(state)[id])
+      A.map((id) => _byId.get(state)[id])
     ),
   getById: (state: ProductState) => (id: number) =>
-    pipe(id, (x) => state.products[x], O.fromNullable),
+    pipe(id, (x) => state.byId[x], O.fromNullable),
 };

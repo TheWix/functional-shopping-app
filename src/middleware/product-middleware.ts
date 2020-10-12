@@ -1,4 +1,4 @@
-import { Dispatch, Middleware } from "@reduxjs/toolkit";
+import { Middleware } from "@reduxjs/toolkit";
 import { constVoid } from "fp-ts/lib/function";
 import { getType } from "typesafe-actions";
 import { Action, default as actions } from "../actions";
